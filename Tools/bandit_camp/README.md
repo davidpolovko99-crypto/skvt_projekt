@@ -32,19 +32,15 @@ Bandité (barvy Manny): **Kápo** červený a **Kuchař** zelený u ohně, **Str
 Trasy v levelu (jen editor, ve hře skryté): červená = varianta A, modrá = varianta B,
 světlejší = alternativy, žlutá = okruh pochůzkáře, fialová = okruh nováčka.
 
-## Co je potřeba doklikat (UE 5.5 neumí z Pythonu editovat grafy)
+## Hlídky (Behavior Tree)
 
-Do té doby `AIC_BanditPatrol` pouští původní BT z lekce 15 (follow), takže hlídkaři chodí za hráčem.
+Grafy jsou hotové v editoru (Python v UE 5.5 je upravovat neumí, proto nejsou ve skriptech):
 
-1. **BTTask_NextPatrolPoint** (proměnné `PatrolTargetKey` a `PatrolIndex` už existují), Event Graph:
-   - `Event Receive Execute AI` → `Cast To BP_Bandit` (Object = Controlled Pawn)
-   - z castu `Get PatrolPoints` → `Get (a copy)` s indexem `PatrolIndex`
-   - `Set Blackboard Value as Object` (Key = `PatrolTargetKey`, Value = výsledek Get)
-   - `Set PatrolIndex` = (`PatrolIndex` + 1) `%` `Length(PatrolPoints)`
-   - `Finish Execute` (Success = ✔). Compile + Save.
-2. **BT_BanditPatrol**: v Details root uzlu nastav Blackboard Asset = `BB_Bandit`. Pak
-   Root → **Sequence** → 1) `BTTask_NextPatrolPoint` (Patrol Target Key = `PatrolTarget`),
-   2) **Move To** (Blackboard Key = `PatrolTarget`, Acceptable Radius 50), 3) **Wait** 5 s. Save.
-3. **AIC_BanditPatrol** (kopie AIC z lekce 15): v uzlu `Run Behavior Tree` přepni BTAsset na
-   `BT_BanditPatrol`. Compile + Save.
-4. Play – pochůzkář a nováček obcházejí své body a na každém 5 s čekají.
+1. **BTTask_NextPatrolPoint**: `Event Receive Execute AI` → `Cast To BP_Bandit` → `Get PatrolPoints[PatrolIndex]`
+   → `Set Blackboard Value as Object` (`PatrolTargetKey`) → `PatrolIndex = (PatrolIndex + 1) % Length`
+   → `Finish Execute` (Success).
+2. **BT_BanditPatrol** (Blackboard `BB_Bandit`, klíč `PatrolTarget` typu Actor):
+   Root → Sequence → `BTTask_NextPatrolPoint` → **Move To** `PatrolTarget` (radius 50) → **Wait** 5 s.
+3. **AIC_BanditPatrol**: `BeginPlay` → `Run Behavior Tree` (`BT_BanditPatrol`).
+
+Ověřeno v Simulate: pochůzkář jde skála → houští → JZ → …, nováček potok → oheň → dřevo, strážný se otáčí.

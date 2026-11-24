@@ -27,9 +27,18 @@ def bp_child(name, parent_class):
     return tools.create_asset(name, AI, unreal.Blueprint, f)
 
 
+def has_var(bp, name):
+    try:
+        unreal.get_default_object(bp.generated_class()).get_editor_property(name)
+        return True
+    except Exception:
+        return False
+
+
 def add_var(bp, name, pin_type, editable=True):
-    if not bel.add_member_variable(bp, name, pin_type):  # False = already exists
+    if has_var(bp, name):
         return
+    bel.add_member_variable(bp, name, pin_type)
     if editable:
         bel.set_blueprint_variable_instance_editable(bp, name, True)
 
